@@ -12,29 +12,7 @@
 
 ---
 
-# Estrutura de Pastas e Arquivos no Frontend
-
-frontend/src/
-├── api/ # 1. _Arquivos de Comunicação com o Backend (Axios)_
-│ └── produtos.ts _# Funções para chamar POST/GET/PUT de produtos_
-├── components/ _# 2. Componentes Reutilizáveis (Cards, Botões, Tabelas)_
-│ ├── layout/
-│ │ ├── Layout.tsx
-│ │ └── Sidebar.tsx
-│ ├── ui/ _# Componentes menores (cards, inputs)_
-│ │ └── KpiCard.tsx
-│ └── tables/
-│ └── ProductTable.tsx
-├── pages/ _# 3. Páginas Principais (Componentes que correspondem a uma rota)_
-│ ├── DashboardPage.tsx
-│ ├── ProductsPage.tsx
-│ ├── LogsPage.tsx
-│ └── ReportsPage.tsx _# Onde ficarão as seções de Importação/Exportação_
-├── App.tsx _# Componente Raiz e Roteamento_
-├── index.css _# Estilos globais_
-└── main.tsx _# Ponto de entrada do React_
-
-### Detalhe dos Arquivos
+### Detalhe dos Arquivos (Front-ent)
 
 1. Arquivos de Roteamento (Raiz)
 
