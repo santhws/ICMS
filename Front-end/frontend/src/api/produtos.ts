@@ -39,3 +39,48 @@ export async function cadastrarProduto(dadosProduto: any) {
 }
 
 // ... Aqui você adicionaria as funções para PUT (atualização) e outros.
+
+// frontend/src/api/produtos.ts (ou outro arquivo de tipos/API)
+
+// ... (Importações e exportações de Produto existentes) ...
+
+// NOVO TIPO: Interface para o Log de Estoque
+export interface LogEstoque {
+  log_id: number;
+  produto_id: number;
+  nome_produto: string; // Para facilitar a exibição no Frontend (pode ser retornado pelo Backend no JOIN)
+  data_movimento: string; // Ou Date, dependendo de como você parseia
+  quantidade: number;
+  tipo_movimento: "ENTRADA" | "SAIDA";
+  motivo: string; // Venda, Compra, Ajuste, Importação, etc.
+}
+
+// Interface para os dados que podem ser atualizados
+export interface ProdutoUpdate {
+  nome?: string;
+  tipo?: string;
+  unidade_medida?: string;
+  preco_venda?: number;
+  // status_ativo não é passado aqui, pois é tratado separadamente na exclusão lógica
+}
+
+// 1. Função para Atualizar o Produto (PUT)
+export async function atualizarProduto(id: number, dados: ProdutoUpdate) {
+  try {
+    const response = await api.put(`/produtos/${id}`, dados);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+}
+
+// 2. Função para Exclusão Lógica (PUT com status_ativo=false)
+export async function desativarProduto(id: number) {
+  try {
+    // Envia o payload com o campo que indica exclusão lógica
+    const response = await api.put(`/produtos/${id}`, { status_ativo: false });
+    return response.data; // Deve retornar o produto desativado
+  } catch (error) {
+    throw error;
+  }
+}

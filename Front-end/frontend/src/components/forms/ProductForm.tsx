@@ -1,98 +1,112 @@
-// frontend/src/components/forms/ProductForm.tsx
+// frontend/src/components/forms/ProductEditForm.tsx
 
-import React, { useState } from "react";
-// Importa a função de cadastro que faz a chamada POST para o Backend
-import { cadastrarProduto } from "../../api/produtos";
+import React, { useState, useEffect } from "react";
+import { Produto } from "../../api/produtos"; // Tipo do produto
+import { atualizarProduto, ProdutoUpdate } from "../../api/produtos";
 
-const ProductForm: React.FC = () => {
-  // 1. Estado para Gerenciar os Dados do Formulário
-  const [formData, setFormData] = useState({
-    nome: "",
-    tipo: "",
-    unidade_medida: "",
-    estoque_inicial: 0, // Campos numéricos
-    preco_venda: 0,
+interface ProductEditFormProps {
+  produto: Produto; // O produto a ser editado (obrigatório)
+  onClose: () => void; // Função para fechar o modal
+  onUpdate: () => Promise<void>; // Função para recarregar a lista (no pai)
+}
+
+const ProductEditForm: React.FC<ProductEditFormProps> = ({
+  produto,
+  onClose,
+  onUpdate,
+}) => {
+  // Inicializa o estado com os dados atuais do produto
+  const [formData, setFormData] = useState<ProdutoUpdate>({
+    nome: produto.nome,
+    tipo: produto.tipo,
+    unidade_medida: produto.unidade_medida,
+    preco_venda: produto.preco_venda,
   });
+  const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{
     text: string;
     type: "success" | "error";
   } | null>(null);
-  const [loading, setLoading] = useState(false);
 
-  // 2. Função para Atualizar o Estado ao Mudar os Campos
+  // Garante que o estado seja atualizado se o produto mudar (ex: se o modal for reutilizado)
+  useEffect(() => {
+    setFormData({
+      nome: produto.nome,
+      tipo: produto.tipo,
+      unidade_medida: produto.unidade_medida,
+      preco_venda: produto.preco_venda,
+    });
+    setMessage(null);
+  }, [produto]);
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
     setFormData((prevData) => ({
       ...prevData,
-      // Converte valores numéricos para float/int
-      [name]:
-        name === "estoque_inicial" || name === "preco_venda"
-          ? parseFloat(value)
-          : value,
+      [name]: name === "preco_venda" ? parseFloat(value) : value,
     }));
   };
 
-  // 3. Função para Lidar com a Submissão
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage(null);
     setLoading(true);
 
     try {
-      // Verifica se o nome e o preço estão preenchidos (validação mínima)
-      if (!formData.nome || !formData.preco_venda) {
-        setMessage({
-          text: "O nome e o preço de venda são obrigatórios.",
-          type: "error",
-        });
-        setLoading(false);
-        return;
-      }
+      // Chamada à API para atualização (PUT)
+      await atualizarProduto(produto.produto_id, formData);
 
-      // Chamada à API (rota POST /api/produtos)
-      const result = await cadastrarProduto(formData);
+      setMessage({ text: "Produto atualizado com sucesso!", type: "success" });
 
-      // Sucesso: Limpa o formulário e exibe mensagem
-      setMessage({
-        text: `Produto cadastrado com sucesso! ID: ${result.produto_id}`,
-        type: "success",
-      });
-      setFormData({
-        nome: "",
-        tipo: "",
-        unidade_medida: "",
-        estoque_inicial: 0,
-        preco_venda: 0,
-      });
+      // Recarrega a lista na página principal e fecha o modal após um pequeno atraso
+      setTimeout(() => {
+        onUpdate();
+        onClose();
+      }, 1000);
     } catch (error: any) {
-      // Erro: Exibe a mensagem de erro da API ou um erro genérico
       const errorMessage =
-        error.response?.data?.error ||
-        "Erro ao cadastrar. Verifique a conexão com o Backend.";
+        error.response?.data?.error || "Erro ao atualizar o produto.";
       setMessage({ text: errorMessage, type: "error" });
     } finally {
       setLoading(false);
     }
   };
 
+  // Estilos simples para o modal (use a sua biblioteca de UI se tiver)
+  const modalStyle = {
+    position: "fixed" as "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 1000,
+  };
+  const contentStyle = {
+    backgroundColor: "white",
+    padding: "30px",
+    borderRadius: "8px",
+    width: "400px",
+  };
+
   return (
-    <div
-      style={{ padding: "20px", border: "1px solid #ccc", borderRadius: "5px" }}
-    >
-      <h3>Cadastrar Novo Produto</h3>
+    <div style={modalStyle}>
+      <div style={contentStyle}>
+        <h4>Editar Produto: {produto.nome}</h4>
 
-      {/* Mensagem de Feedback */}
-      {message && (
-        <p style={{ color: message.type === "success" ? "green" : "red" }}>
-          {message.text}
-        </p>
-      )}
+        {message && (
+          <p style={{ color: message.type === "success" ? "green" : "red" }}>
+            {message.text}
+          </p>
+        )}
 
-      <form onSubmit={handleSubmit}>
-        {/* Campo Nome do Produto */}
-        <div style={{ marginBottom: "10px" }}>
+        <form onSubmit={handleSubmit}>
+          {/* Campos de Edição */}
           <label>Nome:</label>
           <input
             type="text"
@@ -100,84 +114,61 @@ const ProductForm: React.FC = () => {
             value={formData.nome}
             onChange={handleChange}
             required
-            style={{ width: "100%", padding: "8px" }}
+            style={{ width: "100%", marginBottom: "10px" }}
           />
-        </div>
 
-        {/* Campo Tipo */}
-        <div style={{ marginBottom: "10px" }}>
-          <label>Tipo:</label>
-          <select
-            name="tipo"
-            value={formData.tipo}
-            onChange={handleChange}
-            required
-            style={{ width: "100%", padding: "8px" }}
-          >
-            <option value="">Selecione o Tipo</option>
-            <option value="Eletrônico">Eletrônico</option>
-            <option value="Vestuário">Vestuário</option>
-            <option value="Serviço">Serviço</option>
-          </select>
-        </div>
-
-        {/* Campo Unidade de Medida */}
-        <div style={{ marginBottom: "10px" }}>
-          <label>Unidade de Medida:</label>
-          <input
-            type="text"
-            name="unidade_medida"
-            value={formData.unidade_medida}
-            onChange={handleChange}
-            required
-            style={{ width: "100%", padding: "8px" }}
-          />
-        </div>
-
-        {/* Campo Estoque Inicial */}
-        <div style={{ marginBottom: "10px" }}>
-          <label>Estoque Inicial:</label>
-          <input
-            type="number"
-            name="estoque_inicial"
-            value={formData.estoque_inicial}
-            onChange={handleChange}
-            min="0"
-            style={{ width: "100%", padding: "8px" }}
-          />
-        </div>
-
-        {/* Campo Preço de Venda */}
-        <div style={{ marginBottom: "10px" }}>
           <label>Preço de Venda (R$):</label>
           <input
             type="number"
             name="preco_venda"
-            value={formData.preco_venda}
+            value={formData.preco_venda || 0}
             onChange={handleChange}
             required
             step="0.01"
-            min="0"
-            style={{ width: "100%", padding: "8px" }}
+            style={{ width: "100%", marginBottom: "10px" }}
           />
-        </div>
 
-        <button
-          type="submit"
-          disabled={loading}
-          style={{
-            padding: "10px 15px",
-            backgroundColor: "darkgreen",
-            color: "white",
-            border: "none",
-            cursor: "pointer",
-          }}
-        >
-          {loading ? "Cadastrando..." : "Salvar Produto"}
-        </button>
-      </form>
+          {/* (Adicione Tipo e Unidade de Medida aqui, seguindo o padrão) */}
+
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              marginTop: "20px",
+            }}
+          >
+            <button
+              type="submit"
+              disabled={loading}
+              style={{
+                padding: "10px 15px",
+                backgroundColor: "darkgreen",
+                color: "white",
+                border: "none",
+                cursor: "pointer",
+              }}
+            >
+              {loading ? "Salvando..." : "Salvar Alterações"}
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={loading}
+              style={{
+                padding: "10px 15px",
+                backgroundColor: "gray",
+                color: "white",
+                border: "none",
+                cursor: "pointer",
+              }}
+            >
+              Cancelar
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };
 
-export default ProductForm;
+export default ProductEditForm;
