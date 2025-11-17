@@ -40,6 +40,10 @@
 
 ### Estrutura dos Arquivos (Front-end)
 
+### Detalhe dos Arquivos (Front-ent)
+
+> > > > > > > 854bada9a6d33ba372d0067ebf9f0bf6242ec470
+
 1. Arquivos de Roteamento (Raiz)
 
    > `frontend/src/App.tsx`: Define as rotas usando o React Router (ex: Rota /dashboard renderiza o componente DashboardPage).
