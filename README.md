@@ -1,6 +1,6 @@
 # Integrated Commercial Management System (ICMS)
 
-### Principais Funções
+### Principais Funções:
 
 1. Dashboard Interativo
 

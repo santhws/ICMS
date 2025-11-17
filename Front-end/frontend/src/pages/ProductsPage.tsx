@@ -1,32 +1,50 @@
-// frontend/src/pages/ProductsPage.tsx (Trecho)
+// frontend/src/components/tables/ProductTable.tsx
 
-// ... imports existentes (getProdutos, Produto, ProductTable)
-import ProductForm from "../components/forms/ProductForm"; // NOVO IMPORT
+import React from "react";
+// Certifique-se de usar o caminho correto para o tipo Produto
+import { Produto } from ".././api/produtos";
 
-const ProductsPage: React.FC = () => {
-  // ... lógica de estados e useEffect existente (fetchProdutos)
+// 1. Defina a Interface de Props para este componente
+interface ProductTableProps {
+  // A propriedade 'produtos' é obrigatória e é um array de objetos do tipo Produto
+  produtos: Produto[];
+}
 
-  // ... lógica de renderização condicional (loading/error)
+// 2. Use a interface no componente e desestruture a prop
+// Agora, o TypeScript sabe que o componente aceita 'produtos'
+const ProductTable: React.FC<ProductTableProps> = ({ produtos }) => {
+  // Se não houver produtos, exibe uma mensagem
+  if (produtos.length === 0) {
+    return <p>Nenhum produto ativo encontrado.</p>;
+  }
 
   return (
-    <div className="products-page">
-      <h2>Gerenciamento de Produtos</h2>
-
-      {/* Colocamos o formulário e a tabela lado a lado (ou em seções separadas) */}
-      <div style={{ display: "flex", gap: "20px" }}>
-        {/* AQUI ESTÁ O FORMULÁRIO */}
-        <div style={{ flex: 1 }}>
-          <ProductForm />
-        </div>
-
-        {/* A Tabela com a lista de produtos ativos */}
-        <div style={{ flex: 2 }}>
-          <p>Total de Produtos Ativos: {produtos.length}</p>
-          <ProductTable produtos={produtos} />
-        </div>
-      </div>
-    </div>
+    <table style={{ width: "100%", borderCollapse: "collapse" }}>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nome</th>
+          <th>Tipo</th>
+          <th>Estoque Atual</th>
+          <th>Preço de Venda</th>
+          {/* <th>Ações (Editar/Excluir)</th> */}
+        </tr>
+      </thead>
+      <tbody>
+        {/* 3. Renderiza a lista de produtos */}
+        {produtos.map((produto) => (
+          <tr key={produto.produto_id}>
+            <td>{produto.produto_id}</td>
+            <td>{produto.nome}</td>
+            <td>{produto.tipo}</td>
+            <td>{produto.estoque_atual}</td>
+            <td>R$ {produto.preco_venda.toFixed(2)}</td>
+            {/* <td><button>Editar</button></td> */}
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
 };
 
-export default ProductsPage;
+export default ProductTable;
