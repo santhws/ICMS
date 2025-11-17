@@ -1,0 +1,27 @@
+{
+  "dependencies": {
+    "chart.js": "^4.5.1",
+    "express": "^5.1.0",
+    "pg": "^8.16.3",
+    "react-chartjs-2": "^5.3.1"
+  },
+  "name": "icms",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/santhws/ICMS.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/santhws/ICMS/issues"
+  },
+  "homepage": "https://github.com/santhws/ICMS#readme"
+}
