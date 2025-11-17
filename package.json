@@ -26,5 +26,8 @@
   "bugs": {
     "url": "https://github.com/santhws/ICMS/issues"
   },
-  "homepage": "https://github.com/santhws/ICMS#readme"
+  "homepage": "https://github.com/santhws/ICMS#readme",
+  "devDependencies": {
+    "@vitejs/plugin-react": "^5.1.1"
+  }
 }
