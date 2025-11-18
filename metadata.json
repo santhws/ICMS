@@ -1,0 +1,5 @@
+{
+  "name": "Integrated Commercial Management System",
+  "description": "A comprehensive system to manage products, stock, sales, and expenses. Features an interactive dashboard, product management, stock movement logs, and data import/export capabilities.",
+  "requestFramePermissions": []
+}

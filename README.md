@@ -44,7 +44,8 @@
 
 1. Arquivos de Roteamento (Raiz)
 
-   > `frontend/src/App.tsx`: Define as rotas usando o React Router (ex: Rota /dashboard renderiza o componente DashboardPage).</br> > `frontend/src/main.tsx`: Ponto de inicialização do seu aplicativo React.
+   > `frontend/src/App.tsx`: Define as rotas usando o React Router (ex: Rota /dashboard renderiza o componente DashboardPage).</br>  
+   > `frontend/src/main.tsx`: Ponto de inicialização do seu aplicativo React.
 
 2. Módulo Dashboard
 
