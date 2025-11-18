@@ -44,22 +44,21 @@
 
 1. Arquivos de Roteamento (Raiz)
 
-   > `frontend/src/App.tsx`: Define as rotas usando o React Router (ex: Rota /dashboard renderiza o componente DashboardPage).</br>  
-   > `frontend/src/main.tsx`: Ponto de inicialização do seu aplicativo React.
+   > `App.tsx`: Define as rotas usando o React Router (ex: Rota /dashboard renderiza o componente DashboardPage).
+   > `index.tsx`: Ponto de entrada do React: é onde você chama ReactDOM.render(...) (ou createRoot) para renderizar <App /> dentro do HTML. Também pode configurar providers de contexto, roteamento, etc
+   > `types.ts`: Arquivo para declarar tipos / interfaces compartilhadas no projeto (tipos para dados da API, tipagem de modelos, etc).
 
 2. Módulo Dashboard
 
-   > `frontend/src/pages/DashboardPage.tsx`: Contém a lógica de busca de dados do Dashboard.
-   > `frontend/src/components/ui/KpiCard.tsx`: Renderiza um único cartão de indicador (ex: Total de Vendas).
-   > `frontend/src/components/charts/SalesChart.tsx`: Componente de visualização de gráficos.
+   > `/components/DashboardPage.tsx`: Contém a lógica de busca de dados do Dashboard.
+   > `/components/DataManagement.tsx`: Parte da UI onde você gerencia dados.
+   > `/components/Products.tsx`: Componente ligado à parte de produtos: exibição, listagem, cadastro ou edição de produtos.
+   > `/components/Sidebar.tsx`: Barra lateral (menu) para navegação entre diferentes páginas / seções da aplicação.
+   > `/components/StockLog.tsx`: Componente para exibir log de estoque (“entradas / saídas”), histórico de movimentações, auditoria de estoque.
 
 3. Módulo Produtos e Logs
 
-   > `frontend/src/pages/ProductsPage.tsx`: Lógica de listagem, busca e filtragem de produtos.
-   > `frontend/src/pages/LogsPage.tsx`: Exibe o histórico de estoque.
-   > `frontend/src/components/forms/ProductForm.tsx`: O formulário para criar e editar produtos.
-   > `frontend/src/components/tables/ProductTable.tsx`: A tabela que exibe a lista de produtos.
-
-4. Módulo Importação/Exportação
-   > `frontend/src/components/sections/ImportSection.tsx`: O formulário de upload de arquivo Excel.
-   > `frontend/src/components/sections/ExportSection.tsx`: O formulário de seleção de data para exportação.
+   > `components/ui/Button.tsx`: Componente de botão reutilizável, com tipagem em TypeScript (por ser .tsx).
+   > `components/ui/Card.tsx`: Cartão (“card”) de UI, usado para exibir informações agrupadas.
+   > `/components/ui/Input.tsx`: Input de formulário, para digitar texto, números, ou outros dados.
+   > `/components/ui/Modal.tsx`: (janela pop-up), usada para exibir formulários, alertas, confirmações ou formulários de edição.
