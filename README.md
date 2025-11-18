@@ -48,14 +48,10 @@
 1. Arquivos de Roteamento (Raiz)
 
    > `/App.tsx`: Define as rotas usando o React Router (ex: Rota /dashboard renderiza o componente DashboardPage).
+
    > `/index.tsx`: Ponto de entrada do React: é onde você chama ReactDOM.render(...) (ou createRoot) para renderizar <App /> dentro do HTML. Também pode configurar providers de contexto, roteamento, etc
+
    > `/types.ts`: Arquivo para declarar tipos / interfaces compartilhadas no projeto (tipos para dados da API, tipagem de modelos, etc).
-   > =======
-   > `App.tsx`: Define as rotas usando o React Router (ex: Rota /dashboard renderiza o componente DashboardPage).
-
-   > `index.tsx`: Ponto de entrada do React: é onde você chama ReactDOM.render(...) (ou createRoot) para renderizar <App /> dentro do HTML. Também pode configurar providers de contexto, roteamento, etc.
-
-   > `types.ts`: Arquivo para declarar tipos / interfaces compartilhadas no projeto (tipos para dados da API, tipagem de modelos, etc).
 
 2. Módulo Dashboard & Logs
 
@@ -75,9 +71,9 @@
 
    > `/components/ui/Card.tsx`: Cartão (“card”) de UI, usado para exibir informações agrupadas.
 
-   > `components/ui/Button.tsx`: Componente de botão reutilizável, com tipagem em TypeScript (por ser .tsx).
+   > `/components/ui/Button.tsx`: Componente de botão reutilizável, com tipagem em TypeScript (por ser .tsx).
 
-   > `components/ui/Card.tsx`: Cartão (“card”) de UI, usado para exibir informações agrupadas.
+   > `/components/ui/Card.tsx`: Cartão (“card”) de UI, usado para exibir informações agrupadas.
 
    > `/components/ui/Input.tsx`: Input de formulário, para digitar texto, números, ou outros dados.
 
