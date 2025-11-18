@@ -1,25 +1,24 @@
+import React, { useState } from "react";
+import Sidebar from "./components/Sidebar";
+import Dashboard from "./components/Dashboard";
+import Products from "./components/Products";
+import StockLog from "./components/StockLog";
+import DataManagement from "./components/DataManagement";
 
-import React, { useState } from 'react';
-import Sidebar from './components/Sidebar';
-import Dashboard from './components/Dashboard';
-import Products from './components/Products';
-import StockLog from './components/StockLog';
-import DataManagement from './components/DataManagement';
-
-export type View = 'dashboard' | 'products' | 'stock' | 'data';
+export type View = "dashboard" | "products" | "stock" | "data";
 
 const App: React.FC = () => {
-  const [currentView, setCurrentView] = useState<View>('dashboard');
+  const [currentView, setCurrentView] = useState<View>("dashboard");
 
   const renderView = () => {
     switch (currentView) {
-      case 'dashboard':
+      case "dashboard":
         return <Dashboard />;
-      case 'products':
+      case "products":
         return <Products />;
-      case 'stock':
+      case "stock":
         return <StockLog />;
-      case 'data':
+      case "data":
         return <DataManagement />;
       default:
         return <Dashboard />;
