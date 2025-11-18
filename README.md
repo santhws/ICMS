@@ -44,11 +44,11 @@
 
 1. Arquivos de Roteamento (Raiz)
 
-   > `App.tsx`: Define as rotas usando o React Router (ex: Rota /dashboard renderiza o componente DashboardPage).
-   > `index.tsx`: Ponto de entrada do React: é onde você chama ReactDOM.render(...) (ou createRoot) para renderizar <App /> dentro do HTML. Também pode configurar providers de contexto, roteamento, etc
-   > `types.ts`: Arquivo para declarar tipos / interfaces compartilhadas no projeto (tipos para dados da API, tipagem de modelos, etc).
+   > `/App.tsx`: Define as rotas usando o React Router (ex: Rota /dashboard renderiza o componente DashboardPage).
+   > `/index.tsx`: Ponto de entrada do React: é onde você chama ReactDOM.render(...) (ou createRoot) para renderizar <App /> dentro do HTML. Também pode configurar providers de contexto, roteamento, etc
+   > `/types.ts`: Arquivo para declarar tipos / interfaces compartilhadas no projeto (tipos para dados da API, tipagem de modelos, etc).
 
-2. Módulo Dashboard
+2. Módulo Dashboard & Logs
 
    > `/components/DashboardPage.tsx`: Contém a lógica de busca de dados do Dashboard.
    > `/components/DataManagement.tsx`: Parte da UI onde você gerencia dados.
@@ -56,9 +56,9 @@
    > `/components/Sidebar.tsx`: Barra lateral (menu) para navegação entre diferentes páginas / seções da aplicação.
    > `/components/StockLog.tsx`: Componente para exibir log de estoque (“entradas / saídas”), histórico de movimentações, auditoria de estoque.
 
-3. Módulo Produtos e Logs
+3. Módulo UI
 
-   > `components/ui/Button.tsx`: Componente de botão reutilizável, com tipagem em TypeScript (por ser .tsx).
-   > `components/ui/Card.tsx`: Cartão (“card”) de UI, usado para exibir informações agrupadas.
+   > `/components/ui/Button.tsx`: Componente de botão reutilizável, com tipagem em TypeScript (por ser .tsx).
+   > `/components/ui/Card.tsx`: Cartão (“card”) de UI, usado para exibir informações agrupadas.
    > `/components/ui/Input.tsx`: Input de formulário, para digitar texto, números, ou outros dados.
    > `/components/ui/Modal.tsx`: (janela pop-up), usada para exibir formulários, alertas, confirmações ou formulários de edição.
