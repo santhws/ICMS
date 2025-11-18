@@ -11,6 +11,15 @@ import LogsPage from "./pages/LogsPage";
 // Você criará este componente
 import ReportsPage from "./pages/ReportsPage";
 
+const mockedProductsUtils = {
+  addProduct: (product: any) =>
+    console.log("Produto adicionado (MOCK):", product),
+  fetchProducts: () => Promise.resolve([]), // Adicionando uma função de busca
+  deleteProduct: (id: string) => console.log(`Deletando produto ${id} (MOCK)`), // Adicionando uma função de delete
+  // ... adicione todas as outras propriedades obrigatórias da ProductableProps
+};
+// ----------------------------------------------------------------------
+
 const App: React.FC = () => {
   return (
     <Routes>
@@ -24,7 +33,12 @@ const App: React.FC = () => {
         <Route path="dashboard" element={<DashboardPage />} />
 
         {/* 2.2 Cadastro e Gerenciamento de Produtos/Estoque */}
-        <Route path="produtos" element={<ProductsPage />} />
+        {/* CORRIGIDO: Passando a prop productsUtils que ProductsPage exige */}
+        <Route
+          path="produtos"
+          // ELEMENTO CORRIGIDO: Passando o mock completo
+          element={<ProductsPage productsUtils={mockedProductsUtils} />}
+        />
 
         {/* 2.3 Logs de Movimentação (Informação de Atividade de Ações Feitas) */}
         <Route path="logs" element={<LogsPage />} />
