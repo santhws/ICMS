@@ -1,473 +1,271 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { Produto, ProdutoCreateData, ProdutoUpdateData } from "../types";
 import {
-  getProdutos,
-  cadastrarProduto,
-  atualizarProduto,
-  desativarProduto,
-  ajustarEstoque,
-} from "../services/api";
-import Card from "./ui/Card";
-import Button from "./ui/Button";
-import Modal from "./ui/Modal";
-import Input from "./ui/Input";
+  Produto,
+  LogEstoque,
+  ProdutoUpdateData,
+  ProdutoCreateData,
+  KpiData,
+} from "../types";
 
-const ProductForm: React.FC<{
-  product: Partial<Produto> | null;
-  onSave: (data: ProdutoCreateData | ProdutoUpdateData) => void;
-  onCancel: () => void;
-}> = ({ product, onSave, onCancel }) => {
-  const [formData, setFormData] = useState({
-    nome: product?.nome || "",
-    tipo: product?.tipo || "",
-    unidade_medida: product?.unidade_medida || "",
-    preco_venda: product?.preco_venda?.toString() || "",
-    estoque_atual: product?.estoque_atual?.toString() || "",
-  });
+// --- MOCK DATABASE ---
+let mockProdutos: Produto[] = [
+  {
+    produto_id: 1,
+    nome: 'Parafuso Sextavado 1/4"',
+    tipo: "Fixadores",
+    unidade_medida: "UN",
+    estoque_atual: 1500,
+    preco_venda: 0.75,
+    data_cadastro: "2023-10-01T10:00:00Z",
+    ativo: true,
+  },
+  {
+    produto_id: 2,
+    nome: "Tinta Acrílica Branca 18L",
+    tipo: "Pintura",
+    unidade_medida: "L",
+    estoque_atual: 50,
+    preco_venda: 350.0,
+    data_cadastro: "2023-10-02T11:30:00Z",
+    ativo: true,
+  },
+  {
+    produto_id: 3,
+    nome: "Cimento CP II 50kg",
+    tipo: "Construção",
+    unidade_medida: "SC",
+    estoque_atual: 200,
+    preco_venda: 28.5,
+    data_cadastro: "2023-09-28T14:00:00Z",
+    ativo: true,
+  },
+  {
+    produto_id: 4,
+    nome: "Fio Elétrico 2.5mm Rolo 100m",
+    tipo: "Elétrica",
+    unidade_medida: "RL",
+    estoque_atual: 80,
+    preco_venda: 120.0,
+    data_cadastro: "2023-10-05T09:15:00Z",
+    ativo: true,
+  },
+  {
+    produto_id: 5,
+    nome: "Produto Desativado Exemplo",
+    tipo: "Geral",
+    unidade_medida: "UN",
+    estoque_atual: 0,
+    preco_venda: 10.0,
+    data_cadastro: "2023-01-01T00:00:00Z",
+    ativo: false,
+  },
+];
 
-  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+let mockLogs: LogEstoque[] = [
+  {
+    log_id: 101,
+    produto_id: 2,
+    nome_produto: "Tinta Acrílica Branca 18L",
+    data_movimento: "2023-10-28T10:00:00Z",
+    quantidade: 10,
+    tipo_movimento: "ENTRADA",
+    motivo: "Compra",
+    valor_operacao: 2800.0,
+    fornecedor: "Tintas ABC",
+  },
+  {
+    log_id: 102,
+    produto_id: 3,
+    nome_produto: "Cimento CP II 50kg",
+    data_movimento: "2023-10-28T14:20:00Z",
+    quantidade: 20,
+    tipo_movimento: "SAIDA",
+    motivo: "Venda",
+    valor_operacao: 570.0,
+  },
+  {
+    log_id: 103,
+    produto_id: 1,
+    nome_produto: 'Parafuso Sextavado 1/4"',
+    data_movimento: "2023-10-29T09:05:00Z",
+    quantidade: 500,
+    tipo_movimento: "ENTRADA",
+    motivo: "Importação",
+    valor_operacao: 250.0,
+    fornecedor: "Fixadores Inter",
+  },
+  {
+    log_id: 104,
+    produto_id: 4,
+    nome_produto: "Fio Elétrico 2.5mm Rolo 100m",
+    data_movimento: "2023-10-30T11:00:00Z",
+    quantidade: 5,
+    tipo_movimento: "SAIDA",
+    motivo: "Venda",
+    valor_operacao: 600.0,
+  },
+  {
+    log_id: 105,
+    produto_id: 2,
+    nome_produto: "Tinta Acrílica Branca 18L",
+    data_movimento: "2023-10-30T16:45:00Z",
+    quantidade: 2,
+    tipo_movimento: "SAIDA",
+    motivo: "Ajuste",
+    valor_operacao: 700.0,
+  },
+];
 
-  const validateField = (name: string, value: string): string => {
-    switch (name) {
-      case "nome":
-        if (!value.trim()) return "O nome é obrigatório.";
-        if (value.length > 100)
-          return "O nome não pode exceder 100 caracteres.";
-        break;
-      case "tipo":
-        if (!value.trim()) return "O tipo é obrigatório.";
-        if (value.length > 50) return "O tipo não pode exceder 50 caracteres.";
-        break;
-      case "unidade_medida":
-        if (!value.trim()) return "A unidade de medida é obrigatória.";
-        if (value.length > 20)
-          return "A unidade de medida não pode exceder 20 caracteres.";
-        break;
-      case "preco_venda": {
-        if (!value.trim()) return "O preço é obrigatório.";
-        const preco = Number(value);
-        if (isNaN(preco) || preco <= 0) {
-          return "O preço deve ser um número positivo.";
-        }
-        break;
-      }
-      case "estoque_atual": {
-        if (!product?.produto_id) {
-          // Validation only for new products
-          if (!value.trim()) return "O estoque inicial é obrigatório.";
-          const estoque = Number(value);
-          if (isNaN(estoque) || estoque < 0 || !Number.isInteger(estoque)) {
-            return "O estoque deve ser um número inteiro não-negativo.";
-          }
-        }
-        break;
-      }
-      default:
-        break;
-    }
-    return "";
+let nextProductId = 6;
+let nextLogId = 106;
+
+const simulateNetworkLatency = (delay = 500) =>
+  new Promise((res) => setTimeout(res, delay));
+
+// --- API FUNCTIONS ---
+
+// Função para buscar todos os produtos ativos
+export async function getProdutos(): Promise<Produto[]> {
+  await simulateNetworkLatency();
+  return mockProdutos.filter((p) => p.ativo);
+}
+
+// Função para cadastrar um novo produto
+export async function cadastrarProduto(
+  dadosProduto: ProdutoCreateData
+): Promise<Produto> {
+  await simulateNetworkLatency();
+  const novoProduto: Produto = {
+    ...dadosProduto,
+    produto_id: nextProductId++,
+    data_cadastro: new Date().toISOString(),
+    ativo: true,
   };
+  mockProdutos.push(novoProduto);
 
-  const validateForm = (): boolean => {
-    const fieldsToValidate = {
-      nome: formData.nome,
-      tipo: formData.tipo,
-      unidade_medida: formData.unidade_medida,
-      preco_venda: formData.preco_venda,
-      // Only include estoque_atual for validation if it's a new product
-      ...(!product?.produto_id && { estoque_atual: formData.estoque_atual }),
+  // --- LOG DE ESTOQUE INICIAL ---
+  // Conforme solicitado, um log de 'ENTRADA' é criado se o produto
+  // for cadastrado com estoque inicial maior que zero.
+  if (novoProduto.estoque_atual > 0) {
+    const novoLog: LogEstoque = {
+      log_id: nextLogId++,
+      produto_id: novoProduto.produto_id,
+      nome_produto: novoProduto.nome,
+      data_movimento: new Date().toISOString(),
+      quantidade: novoProduto.estoque_atual,
+      tipo_movimento: "ENTRADA",
+      motivo: "Cadastro Inicial",
+      valor_operacao: novoProduto.estoque_atual * novoProduto.preco_venda,
     };
+    mockLogs.push(novoLog);
+  }
 
-    const newErrors: { [key: string]: string } = {};
-    let isValid = true;
-    for (const [key, value] of Object.entries(fieldsToValidate)) {
-      const error = validateField(key, value);
-      if (error) {
-        newErrors[key] = error;
-        isValid = false;
-      }
-    }
-    setErrors(newErrors);
-    return isValid;
-  };
+  return novoProduto;
+}
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    // Clear the error for the field being edited for better user experience
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: "" }));
-    }
-  };
+// Função para atualizar um produto existente
+export async function atualizarProduto(
+  id: number,
+  dadosAtualizacao: ProdutoUpdateData
+): Promise<Produto> {
+  await simulateNetworkLatency();
+  const index = mockProdutos.findIndex((p) => p.produto_id === id);
+  if (index === -1) {
+    throw new Error("Produto não encontrado");
+  }
+  mockProdutos[index] = { ...mockProdutos[index], ...dadosAtualizacao };
+  return mockProdutos[index];
+}
 
-  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    const error = validateField(name, value);
-    setErrors((prev) => ({ ...prev, [name]: error }));
-  };
+// Função para exclusão lógica
+export async function desativarProduto(id: number): Promise<Produto> {
+  await simulateNetworkLatency();
+  const index = mockProdutos.findIndex((p) => p.produto_id === id);
+  if (index === -1) {
+    throw new Error("Produto não encontrado");
+  }
+  const produto = mockProdutos[index];
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (validateForm()) {
-      const commonData = {
-        nome: formData.nome.trim(),
-        tipo: formData.tipo.trim(),
-        unidade_medida: formData.unidade_medida.trim(),
-        preco_venda: parseFloat(formData.preco_venda),
-      };
-      if (product?.produto_id) {
-        onSave(commonData);
-      } else {
-        const createData: ProdutoCreateData = {
-          ...commonData,
-          estoque_atual: parseInt(formData.estoque_atual, 10),
-        };
-        onSave(createData);
-      }
-    }
-  };
+  // Se houver estoque, cria um log de saída para zerá-lo
+  if (produto.estoque_atual > 0) {
+    const logBaixa: LogEstoque = {
+      log_id: nextLogId++,
+      produto_id: produto.produto_id,
+      nome_produto: produto.nome,
+      data_movimento: new Date().toISOString(),
+      quantidade: produto.estoque_atual,
+      tipo_movimento: "SAIDA",
+      motivo: "Baixa por Desativação",
+      valor_operacao: produto.estoque_atual * produto.preco_venda,
+    };
+    mockLogs.push(logBaixa);
+  }
 
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-      <Input
-        label="Nome do Produto"
-        name="nome"
-        value={formData.nome}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        error={errors.nome}
-        maxLength={100}
-      />
-      <Input
-        label="Tipo"
-        name="tipo"
-        value={formData.tipo}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        error={errors.tipo}
-        maxLength={50}
-      />
-      <Input
-        label="Unidade de Medida"
-        name="unidade_medida"
-        value={formData.unidade_medida}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        error={errors.unidade_medida}
-        maxLength={20}
-      />
-      <Input
-        label="Preço de Venda"
-        name="preco_venda"
-        type="number"
-        step="0.01"
-        value={formData.preco_venda}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        error={errors.preco_venda}
-      />
-      {!product?.produto_id && (
-        <Input
-          label="Estoque Inicial"
-          name="estoque_atual"
-          type="number"
-          value={formData.estoque_atual}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          error={errors.estoque_atual}
-        />
-      )}
-      <div className="flex justify-end gap-4 pt-4">
-        <Button type="button" variant="secondary" onClick={onCancel}>
-          Cancelar
-        </Button>
-        <Button type="submit" variant="primary">
-          {product?.produto_id ? "Salvar Alterações" : "Cadastrar Produto"}
-        </Button>
-      </div>
-    </form>
+  // Zera o estoque e desativa o produto
+  return atualizarProduto(id, { ativo: false, estoque_atual: 0 });
+}
+
+// Nova função para ajustar o estoque
+export async function ajustarEstoque(
+  id: number,
+  novaQuantidade: number,
+  motivo: string
+): Promise<Produto> {
+  await simulateNetworkLatency();
+  const index = mockProdutos.findIndex((p) => p.produto_id === id);
+  if (index === -1) {
+    throw new Error("Produto não encontrado");
+  }
+
+  const produto = mockProdutos[index];
+  const estoqueAntigo = produto.estoque_atual;
+  const diferenca = novaQuantidade - estoqueAntigo;
+
+  if (diferenca !== 0) {
+    const logAjuste: LogEstoque = {
+      log_id: nextLogId++,
+      produto_id: produto.produto_id,
+      nome_produto: produto.nome,
+      data_movimento: new Date().toISOString(),
+      quantidade: Math.abs(diferenca),
+      tipo_movimento: diferenca > 0 ? "ENTRADA" : "SAIDA",
+      motivo: motivo.trim(),
+      valor_operacao: Math.abs(diferenca) * produto.preco_venda,
+    };
+    mockLogs.push(logAjuste);
+  }
+
+  // Atualiza o estoque do produto
+  return atualizarProduto(id, { estoque_atual: novaQuantidade });
+}
+
+// Função para buscar os logs de estoque
+export async function getLogsEstoque(): Promise<LogEstoque[]> {
+  await simulateNetworkLatency();
+  return [...mockLogs].sort(
+    (a, b) =>
+      new Date(b.data_movimento).getTime() -
+      new Date(a.data_movimento).getTime()
   );
-};
+}
 
-const StockAdjustForm: React.FC<{
-  product: Produto;
-  onSave: (id: number, newQuantity: number, reason: string) => Promise<void>;
-  onCancel: () => void;
-}> = ({ product, onSave, onCancel }) => {
-  const [newStock, setNewStock] = useState(product.estoque_atual.toString());
-  const [reason, setReason] = useState("");
-  const [error, setError] = useState("");
+// Função para buscar os dados do dashboard
+export async function getKpiData(): Promise<KpiData> {
+  await simulateNetworkLatency();
+  const totalVendas = mockLogs
+    .filter((log) => log.tipo_movimento === "SAIDA" && log.motivo === "Venda")
+    .reduce((sum, log) => sum + log.valor_operacao, 0);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const stockNumber = Number(newStock);
-    if (!reason.trim()) {
-      setError("O motivo do ajuste é obrigatório.");
-      return;
-    }
-    if (
-      isNaN(stockNumber) ||
-      stockNumber < 0 ||
-      !Number.isInteger(stockNumber)
-    ) {
-      setError(
-        "A nova quantidade de estoque deve ser um número inteiro não-negativo."
-      );
-      return;
-    }
-    setError("");
-    onSave(product.produto_id, stockNumber, reason);
+  const totalDespesas = mockLogs
+    .filter(
+      (log) =>
+        log.tipo_movimento === "ENTRADA" &&
+        (log.motivo === "Compra" || log.motivo === "Importação")
+    )
+    .reduce((sum, log) => sum + log.valor_operacao, 0);
+
+  return {
+    totalVendas,
+    totalDespesas,
+    saldo: totalVendas - totalDespesas,
   };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <h3 className="font-semibold text-lg">{product.nome}</h3>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          Estoque Atual: {product.estoque_atual} {product.unidade_medida}
-        </p>
-      </div>
-      <Input
-        label="Nova Quantidade em Estoque"
-        name="newStock"
-        type="number"
-        value={newStock}
-        onChange={(e) => setNewStock(e.target.value)}
-        error={error && error.includes("quantidade") ? error : undefined}
-      />
-      <Input
-        label="Motivo do Ajuste"
-        name="reason"
-        value={reason}
-        onChange={(e) => setReason(e.target.value)}
-        placeholder="Ex: Correção de inventário"
-        error={error && error.includes("motivo") ? error : undefined}
-      />
-      <div className="flex justify-end gap-4 pt-4">
-        <Button type="button" variant="secondary" onClick={onCancel}>
-          Cancelar
-        </Button>
-        <Button type="submit" variant="primary">
-          Salvar Ajuste
-        </Button>
-      </div>
-    </form>
-  );
-};
-
-const Products: React.FC = () => {
-  const [products, setProducts] = useState<Produto[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<Produto | null>(null);
-  const [isAdjustModalOpen, setIsAdjustModalOpen] = useState(false);
-  const [adjustingProduct, setAdjustingProduct] = useState<Produto | null>(
-    null
-  );
-
-  const fetchProducts = useCallback(async () => {
-    try {
-      setLoading(true);
-      const data = await getProdutos();
-      setProducts(data);
-      setError(null);
-    } catch (err) {
-      setError("Falha ao carregar produtos.");
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
-
-  const handleOpenModal = (product: Produto | null = null) => {
-    setEditingProduct(product);
-    setIsModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setEditingProduct(null);
-  };
-
-  const handleOpenAdjustModal = (product: Produto) => {
-    setAdjustingProduct(product);
-    setIsAdjustModalOpen(true);
-  };
-
-  const handleCloseAdjustModal = () => {
-    setIsAdjustModalOpen(false);
-    setAdjustingProduct(null);
-  };
-
-  const handleSaveProduct = async (
-    data: ProdutoCreateData | ProdutoUpdateData
-  ) => {
-    try {
-      if (editingProduct && editingProduct.produto_id) {
-        await atualizarProduto(
-          editingProduct.produto_id,
-          data as ProdutoUpdateData
-        );
-      } else {
-        await cadastrarProduto(data as ProdutoCreateData);
-      }
-      handleCloseModal();
-      await fetchProducts();
-    } catch (err) {
-      console.error("Failed to save product:", err);
-      // Here you would show an error toast to the user
-    }
-  };
-
-  const handleAdjustStock = async (
-    id: number,
-    newQuantity: number,
-    reason: string
-  ) => {
-    try {
-      await ajustarEstoque(id, newQuantity, reason);
-      handleCloseAdjustModal();
-      await fetchProducts();
-    } catch (err) {
-      console.error("Failed to adjust stock:", err);
-    }
-  };
-
-  const handleDeleteProduct = async (id: number) => {
-    if (
-      window.confirm(
-        "Tem certeza que deseja desativar este produto? O estoque será zerado."
-      )
-    ) {
-      try {
-        await desativarProduto(id);
-        await fetchProducts();
-      } catch (err) {
-        console.error("Failed to deactivate product:", err);
-      }
-    }
-  };
-
-  return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-          Gerenciamento de Produtos
-        </h1>
-        <Button onClick={() => handleOpenModal()}>Adicionar Produto</Button>
-      </div>
-
-      <Card>
-        {loading && <p>Carregando produtos...</p>}
-        {error && <p className="text-red-500">{error}</p>}
-        {!loading && !error && (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-              <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-                <tr>
-                  <th scope="col" className="px-6 py-3">
-                    ID
-                  </th>
-                  <th scope="col" className="px-6 py-3">
-                    Nome
-                  </th>
-                  <th scope="col" className="px-6 py-3">
-                    Tipo
-                  </th>
-                  <th scope="col" className="px-6 py-3">
-                    Estoque
-                  </th>
-                  <th scope="col" className="px-6 py-3">
-                    Preço Venda
-                  </th>
-                  <th scope="col" className="px-6 py-3">
-                    Ações
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {products.map((product) => (
-                  <tr
-                    key={product.produto_id}
-                    className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
-                  >
-                    <td className="px-6 py-4">{product.produto_id}</td>
-                    <td className="px-6 py-4 font-medium text-gray-900 dark:text-white whitespace-nowrap">
-                      {product.nome}
-                    </td>
-                    <td className="px-6 py-4">{product.tipo}</td>
-                    <td className="px-6 py-4">
-                      {product.estoque_atual} {product.unidade_medida}
-                    </td>
-                    <td className="px-6 py-4">
-                      {new Intl.NumberFormat("pt-BR", {
-                        style: "currency",
-                        currency: "BRL",
-                      }).format(product.preco_venda)}
-                    </td>
-                    <td className="px-6 py-4 flex flex-wrap gap-2">
-                      <Button
-                        variant="secondary"
-                        className="px-2 py-1 text-xs"
-                        onClick={() => handleOpenModal(product)}
-                      >
-                        Editar
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        className="px-2 py-1 text-xs"
-                        onClick={() => handleOpenAdjustModal(product)}
-                      >
-                        Ajustar Estoque
-                      </Button>
-                      <Button
-                        variant="danger"
-                        className="px-2 py-1 text-xs"
-                        onClick={() => handleDeleteProduct(product.produto_id)}
-                      >
-                        Desativar
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </Card>
-
-      <Modal
-        isOpen={isModalOpen}
-        onClose={handleCloseModal}
-        title={editingProduct ? "Editar Produto" : "Cadastrar Novo Produto"}
-      >
-        <ProductForm
-          product={editingProduct}
-          onSave={handleSaveProduct}
-          onCancel={handleCloseModal}
-        />
-      </Modal>
-
-      {adjustingProduct && (
-        <Modal
-          isOpen={isAdjustModalOpen}
-          onClose={handleCloseAdjustModal}
-          title="Ajustar Estoque"
-        >
-          <StockAdjustForm
-            product={adjustingProduct}
-            onSave={handleAdjustStock}
-            onCancel={handleCloseAdjustModal}
-          />
-        </Modal>
-      )}
-    </div>
-  );
-};
-
-export default Products;
+}
