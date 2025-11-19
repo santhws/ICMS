@@ -5,6 +5,7 @@ import {
   cadastrarProduto,
   atualizarProduto,
   desativarProduto,
+  ajustarEstoque,
 } from "../services/api";
 import Card from "./ui/Card";
 import Button from "./ui/Button";
@@ -188,12 +189,82 @@ const ProductForm: React.FC<{
   );
 };
 
+const StockAdjustForm: React.FC<{
+  product: Produto;
+  onSave: (id: number, newQuantity: number, reason: string) => Promise<void>;
+  onCancel: () => void;
+}> = ({ product, onSave, onCancel }) => {
+  const [newStock, setNewStock] = useState(product.estoque_atual.toString());
+  const [reason, setReason] = useState("");
+  const [error, setError] = useState("");
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const stockNumber = Number(newStock);
+    if (!reason.trim()) {
+      setError("O motivo do ajuste é obrigatório.");
+      return;
+    }
+    if (
+      isNaN(stockNumber) ||
+      stockNumber < 0 ||
+      !Number.isInteger(stockNumber)
+    ) {
+      setError(
+        "A nova quantidade de estoque deve ser um número inteiro não-negativo."
+      );
+      return;
+    }
+    setError("");
+    onSave(product.produto_id, stockNumber, reason);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <h3 className="font-semibold text-lg">{product.nome}</h3>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          Estoque Atual: {product.estoque_atual} {product.unidade_medida}
+        </p>
+      </div>
+      <Input
+        label="Nova Quantidade em Estoque"
+        name="newStock"
+        type="number"
+        value={newStock}
+        onChange={(e) => setNewStock(e.target.value)}
+        error={error && error.includes("quantidade") ? error : undefined}
+      />
+      <Input
+        label="Motivo do Ajuste"
+        name="reason"
+        value={reason}
+        onChange={(e) => setReason(e.target.value)}
+        placeholder="Ex: Correção de inventário"
+        error={error && error.includes("motivo") ? error : undefined}
+      />
+      <div className="flex justify-end gap-4 pt-4">
+        <Button type="button" variant="secondary" onClick={onCancel}>
+          Cancelar
+        </Button>
+        <Button type="submit" variant="primary">
+          Salvar Ajuste
+        </Button>
+      </div>
+    </form>
+  );
+};
+
 const Products: React.FC = () => {
   const [products, setProducts] = useState<Produto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Produto | null>(null);
+  const [isAdjustModalOpen, setIsAdjustModalOpen] = useState(false);
+  const [adjustingProduct, setAdjustingProduct] = useState<Produto | null>(
+    null
+  );
 
   const fetchProducts = useCallback(async () => {
     try {
@@ -223,6 +294,16 @@ const Products: React.FC = () => {
     setEditingProduct(null);
   };
 
+  const handleOpenAdjustModal = (product: Produto) => {
+    setAdjustingProduct(product);
+    setIsAdjustModalOpen(true);
+  };
+
+  const handleCloseAdjustModal = () => {
+    setIsAdjustModalOpen(false);
+    setAdjustingProduct(null);
+  };
+
   const handleSaveProduct = async (
     data: ProdutoCreateData | ProdutoUpdateData
   ) => {
@@ -243,8 +324,26 @@ const Products: React.FC = () => {
     }
   };
 
+  const handleAdjustStock = async (
+    id: number,
+    newQuantity: number,
+    reason: string
+  ) => {
+    try {
+      await ajustarEstoque(id, newQuantity, reason);
+      handleCloseAdjustModal();
+      await fetchProducts();
+    } catch (err) {
+      console.error("Failed to adjust stock:", err);
+    }
+  };
+
   const handleDeleteProduct = async (id: number) => {
-    if (window.confirm("Tem certeza que deseja desativar este produto?")) {
+    if (
+      window.confirm(
+        "Tem certeza que deseja desativar este produto? O estoque será zerado."
+      )
+    ) {
       try {
         await desativarProduto(id);
         await fetchProducts();
@@ -311,13 +410,20 @@ const Products: React.FC = () => {
                         currency: "BRL",
                       }).format(product.preco_venda)}
                     </td>
-                    <td className="px-6 py-4 flex gap-2">
+                    <td className="px-6 py-4 flex flex-wrap gap-2">
                       <Button
                         variant="secondary"
                         className="px-2 py-1 text-xs"
                         onClick={() => handleOpenModal(product)}
                       >
                         Editar
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        className="px-2 py-1 text-xs"
+                        onClick={() => handleOpenAdjustModal(product)}
+                      >
+                        Ajustar Estoque
                       </Button>
                       <Button
                         variant="danger"
@@ -346,6 +452,20 @@ const Products: React.FC = () => {
           onCancel={handleCloseModal}
         />
       </Modal>
+
+      {adjustingProduct && (
+        <Modal
+          isOpen={isAdjustModalOpen}
+          onClose={handleCloseAdjustModal}
+          title="Ajustar Estoque"
+        >
+          <StockAdjustForm
+            product={adjustingProduct}
+            onSave={handleAdjustStock}
+            onCancel={handleCloseAdjustModal}
+          />
+        </Modal>
+      )}
     </div>
   );
 };

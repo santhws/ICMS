@@ -1,4 +1,3 @@
-
 export interface Produto {
   produto_id: number;
   nome: string;
@@ -10,7 +9,10 @@ export interface Produto {
   ativo: boolean;
 }
 
-export type ProdutoCreateData = Omit<Produto, 'produto_id' | 'data_cadastro' | 'ativo'>;
+export type ProdutoCreateData = Omit<
+  Produto,
+  "produto_id" | "data_cadastro" | "ativo"
+>;
 
 export interface ProdutoUpdateData {
   nome?: string;
@@ -18,6 +20,8 @@ export interface ProdutoUpdateData {
   unidade_medida?: string;
   preco_venda?: number;
   ativo?: boolean;
+  // FIX: Add 'estoque_atual' to allow it to be updated.
+  estoque_atual?: number;
 }
 
 export interface LogEstoque {
