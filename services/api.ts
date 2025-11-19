@@ -4,132 +4,30 @@ import {
   ProdutoUpdateData,
   ProdutoCreateData,
   KpiData,
+  Despesa,
+  DespesaCreateData,
 } from "../types";
 
 // --- MOCK DATABASE ---
-let mockProdutos: Produto[] = [
-  {
-    produto_id: 1,
-    nome: 'Parafuso Sextavado 1/4"',
-    tipo: "Fixadores",
-    unidade_medida: "UN",
-    estoque_atual: 1500,
-    preco_venda: 0.75,
-    data_cadastro: "2023-10-01T10:00:00Z",
-    ativo: true,
-  },
-  {
-    produto_id: 2,
-    nome: "Tinta Acrílica Branca 18L",
-    tipo: "Pintura",
-    unidade_medida: "L",
-    estoque_atual: 50,
-    preco_venda: 350.0,
-    data_cadastro: "2023-10-02T11:30:00Z",
-    ativo: true,
-  },
-  {
-    produto_id: 3,
-    nome: "Cimento CP II 50kg",
-    tipo: "Construção",
-    unidade_medida: "SC",
-    estoque_atual: 200,
-    preco_venda: 28.5,
-    data_cadastro: "2023-09-28T14:00:00Z",
-    ativo: true,
-  },
-  {
-    produto_id: 4,
-    nome: "Fio Elétrico 2.5mm Rolo 100m",
-    tipo: "Elétrica",
-    unidade_medida: "RL",
-    estoque_atual: 80,
-    preco_venda: 120.0,
-    data_cadastro: "2023-10-05T09:15:00Z",
-    ativo: true,
-  },
-  {
-    produto_id: 5,
-    nome: "Produto Desativado Exemplo",
-    tipo: "Geral",
-    unidade_medida: "UN",
-    estoque_atual: 0,
-    preco_venda: 10.0,
-    data_cadastro: "2023-01-01T00:00:00Z",
-    ativo: false,
-  },
-];
+// Resetting data to start fresh as requested.
+let mockProdutos: Produto[] = [];
+let mockLogs: LogEstoque[] = [];
+let mockDespesas: Despesa[] = [];
 
-let mockLogs: LogEstoque[] = [
-  {
-    log_id: 101,
-    produto_id: 2,
-    nome_produto: "Tinta Acrílica Branca 18L",
-    data_movimento: "2023-10-28T10:00:00Z",
-    quantidade: 10,
-    tipo_movimento: "ENTRADA",
-    motivo: "Compra",
-    valor_operacao: 2800.0,
-    fornecedor: "Tintas ABC",
-  },
-  {
-    log_id: 102,
-    produto_id: 3,
-    nome_produto: "Cimento CP II 50kg",
-    data_movimento: "2023-10-28T14:20:00Z",
-    quantidade: 20,
-    tipo_movimento: "SAIDA",
-    motivo: "Venda",
-    valor_operacao: 570.0,
-  },
-  {
-    log_id: 103,
-    produto_id: 1,
-    nome_produto: 'Parafuso Sextavado 1/4"',
-    data_movimento: "2023-10-29T09:05:00Z",
-    quantidade: 500,
-    tipo_movimento: "ENTRADA",
-    motivo: "Importação",
-    valor_operacao: 250.0,
-    fornecedor: "Fixadores Inter",
-  },
-  {
-    log_id: 104,
-    produto_id: 4,
-    nome_produto: "Fio Elétrico 2.5mm Rolo 100m",
-    data_movimento: "2023-10-30T11:00:00Z",
-    quantidade: 5,
-    tipo_movimento: "SAIDA",
-    motivo: "Venda",
-    valor_operacao: 600.0,
-  },
-  {
-    log_id: 105,
-    produto_id: 2,
-    nome_produto: "Tinta Acrílica Branca 18L",
-    data_movimento: "2023-10-30T16:45:00Z",
-    quantidade: 2,
-    tipo_movimento: "SAIDA",
-    motivo: "Ajuste",
-    valor_operacao: 700.0,
-  },
-];
-
-let nextProductId = 6;
-let nextLogId = 106;
+let nextProductId = 1;
+let nextLogId = 1;
+let nextDespesaId = 1;
 
 const simulateNetworkLatency = (delay = 500) =>
   new Promise((res) => setTimeout(res, delay));
 
-// --- API FUNCTIONS ---
+// --- PRODUCTS API FUNCTIONS ---
 
-// Função para buscar todos os produtos ativos
 export async function getProdutos(): Promise<Produto[]> {
   await simulateNetworkLatency();
   return mockProdutos.filter((p) => p.ativo);
 }
 
-// Função para cadastrar um novo produto
 export async function cadastrarProduto(
   dadosProduto: ProdutoCreateData
 ): Promise<Produto> {
@@ -142,9 +40,6 @@ export async function cadastrarProduto(
   };
   mockProdutos.push(novoProduto);
 
-  // --- LOG DE ESTOQUE INICIAL ---
-  // Conforme solicitado, um log de 'ENTRADA' é criado se o produto
-  // for cadastrado com estoque inicial maior que zero.
   if (novoProduto.estoque_atual > 0) {
     const novoLog: LogEstoque = {
       log_id: nextLogId++,
@@ -154,7 +49,7 @@ export async function cadastrarProduto(
       quantidade: novoProduto.estoque_atual,
       tipo_movimento: "ENTRADA",
       motivo: "Cadastro Inicial",
-      valor_operacao: novoProduto.estoque_atual * novoProduto.preco_venda,
+      valor_operacao: 0, // Initial stock value is cost, not revenue. Assuming 0 cost for initial entry for simplicity.
     };
     mockLogs.push(novoLog);
   }
@@ -162,7 +57,6 @@ export async function cadastrarProduto(
   return novoProduto;
 }
 
-// Função para atualizar um produto existente
 export async function atualizarProduto(
   id: number,
   dadosAtualizacao: ProdutoUpdateData
@@ -176,7 +70,6 @@ export async function atualizarProduto(
   return mockProdutos[index];
 }
 
-// Função para exclusão lógica
 export async function desativarProduto(id: number): Promise<Produto> {
   await simulateNetworkLatency();
   const index = mockProdutos.findIndex((p) => p.produto_id === id);
@@ -185,7 +78,6 @@ export async function desativarProduto(id: number): Promise<Produto> {
   }
   const produto = mockProdutos[index];
 
-  // Se houver estoque, cria um log de saída para zerá-lo
   if (produto.estoque_atual > 0) {
     const logBaixa: LogEstoque = {
       log_id: nextLogId++,
@@ -195,16 +87,14 @@ export async function desativarProduto(id: number): Promise<Produto> {
       quantidade: produto.estoque_atual,
       tipo_movimento: "SAIDA",
       motivo: "Baixa por Desativação",
-      valor_operacao: produto.estoque_atual * produto.preco_venda,
+      valor_operacao: 0, // Writing off stock is a loss, not a sale.
     };
     mockLogs.push(logBaixa);
   }
 
-  // Zera o estoque e desativa o produto
   return atualizarProduto(id, { ativo: false, estoque_atual: 0 });
 }
 
-// Nova função para ajustar o estoque
 export async function ajustarEstoque(
   id: number,
   novaQuantidade: number,
@@ -229,16 +119,19 @@ export async function ajustarEstoque(
       quantidade: Math.abs(diferenca),
       tipo_movimento: diferenca > 0 ? "ENTRADA" : "SAIDA",
       motivo: motivo.trim(),
-      valor_operacao: Math.abs(diferenca) * produto.preco_venda,
+      // Assuming adjustments have no financial value unless specified
+      valor_operacao:
+        motivo.toLowerCase() === "venda"
+          ? Math.abs(diferenca) * produto.preco_venda
+          : 0,
     };
     mockLogs.push(logAjuste);
   }
 
-  // Atualiza o estoque do produto
   return atualizarProduto(id, { estoque_atual: novaQuantidade });
 }
 
-// Função para buscar os logs de estoque
+// --- STOCK LOG API FUNCTIONS ---
 export async function getLogsEstoque(): Promise<LogEstoque[]> {
   await simulateNetworkLatency();
   return [...mockLogs].sort(
@@ -248,20 +141,53 @@ export async function getLogsEstoque(): Promise<LogEstoque[]> {
   );
 }
 
-// Função para buscar os dados do dashboard
+// --- EXPENSES API FUNCTIONS ---
+export async function getDespesas(): Promise<Despesa[]> {
+  await simulateNetworkLatency();
+  return [...mockDespesas].sort(
+    (a, b) => new Date(b.data).getTime() - new Date(a.data).getTime()
+  );
+}
+
+export async function cadastrarDespesa(
+  dadosDespesa: DespesaCreateData
+): Promise<Despesa> {
+  await simulateNetworkLatency();
+  const novaDespesa: Despesa = {
+    ...dadosDespesa,
+    despesa_id: nextDespesaId++,
+    data: new Date().toISOString(),
+  };
+  mockDespesas.push(novaDespesa);
+  return novaDespesa;
+}
+
+// --- DASHBOARD API FUNCTIONS ---
 export async function getKpiData(): Promise<KpiData> {
   await simulateNetworkLatency();
+
   const totalVendas = mockLogs
-    .filter((log) => log.tipo_movimento === "SAIDA" && log.motivo === "Venda")
+    .filter(
+      (log) =>
+        log.tipo_movimento === "SAIDA" && log.motivo.toLowerCase() === "venda"
+    )
     .reduce((sum, log) => sum + log.valor_operacao, 0);
 
-  const totalDespesas = mockLogs
+  const despesasDeEstoque = mockLogs
     .filter(
       (log) =>
         log.tipo_movimento === "ENTRADA" &&
-        (log.motivo === "Compra" || log.motivo === "Importação")
+        (log.motivo.toLowerCase() === "compra" ||
+          log.motivo.toLowerCase() === "importação")
     )
     .reduce((sum, log) => sum + log.valor_operacao, 0);
+
+  const outrasDespesas = mockDespesas.reduce(
+    (sum, despesa) => sum + despesa.valor,
+    0
+  );
+
+  const totalDespesas = despesasDeEstoque + outrasDespesas;
 
   return {
     totalVendas,

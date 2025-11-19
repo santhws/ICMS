@@ -9,7 +9,6 @@ interface SidebarProps {
 interface NavItemProps {
   view: View;
   label: string;
-  // FIX: Changed JSX.Element to React.ReactNode to resolve "Cannot find namespace 'JSX'".
   icon: React.ReactNode;
   currentView: View;
   onClick: (view: View) => void;
@@ -94,6 +93,14 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView }) => {
             isCollapsed={isCollapsed}
           />
           <NavItem
+            view="expenses"
+            label="Despesas"
+            icon={<ExpensesIcon />}
+            currentView={currentView}
+            onClick={setCurrentView}
+            isCollapsed={isCollapsed}
+          />
+          <NavItem
             view="data"
             label="Import/Export"
             icon={<DataIcon />}
@@ -160,6 +167,22 @@ const StockIcon = () => (
       strokeLinejoin="round"
       strokeWidth={2}
       d="M4 7v10m16-10v10M4 7h16M4 17h16M10 7v10m4-10v10"
+    />
+  </svg>
+);
+const ExpensesIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="h-6 w-6 shrink-0"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M9 8h6m-5 4h.01M18 13V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2h4l4-4z"
     />
   </svg>
 );

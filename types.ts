@@ -20,7 +20,6 @@ export interface ProdutoUpdateData {
   unidade_medida?: string;
   preco_venda?: number;
   ativo?: boolean;
-  // FIX: Add 'estoque_atual' to allow it to be updated.
   estoque_atual?: number;
 }
 
@@ -41,3 +40,13 @@ export interface KpiData {
   totalDespesas: number;
   saldo: number;
 }
+
+// --- NEW TYPES FOR EXPENSES ---
+export interface Despesa {
+  despesa_id: number;
+  motivo: string;
+  valor: number;
+  data: string;
+}
+
+export type DespesaCreateData = Omit<Despesa, "despesa_id" | "data">;

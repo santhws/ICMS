@@ -4,8 +4,9 @@ import Dashboard from "./components/Dashboard";
 import Products from "./components/Products";
 import StockLog from "./components/StockLog";
 import DataManagement from "./components/DataManagement";
+import Expenses from "./components/Expenses"; // Import the new component
 
-export type View = "dashboard" | "products" | "stock" | "data";
+export type View = "dashboard" | "products" | "stock" | "data" | "expenses";
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<View>("dashboard");
@@ -20,6 +21,8 @@ const App: React.FC = () => {
         return <StockLog />;
       case "data":
         return <DataManagement />;
+      case "expenses":
+        return <Expenses />; // Add the new case
       default:
         return <Dashboard />;
     }
