@@ -20,45 +20,140 @@ const ProductForm: React.FC<{
     nome: product?.nome || "",
     tipo: product?.tipo || "",
     unidade_medida: product?.unidade_medida || "",
-    preco_venda: product?.preco_venda || 0,
-    estoque_atual: product?.estoque_atual || 0,
+    preco_venda: product?.preco_venda?.toString() || "",
+    estoque_atual: product?.estoque_atual?.toString() || "",
   });
 
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
+  const validateField = (name: string, value: string): string => {
+    switch (name) {
+      case "nome":
+        if (!value.trim()) return "O nome é obrigatório.";
+        if (value.length > 100)
+          return "O nome não pode exceder 100 caracteres.";
+        break;
+      case "tipo":
+        if (!value.trim()) return "O tipo é obrigatório.";
+        if (value.length > 50) return "O tipo não pode exceder 50 caracteres.";
+        break;
+      case "unidade_medida":
+        if (!value.trim()) return "A unidade de medida é obrigatória.";
+        if (value.length > 20)
+          return "A unidade de medida não pode exceder 20 caracteres.";
+        break;
+      case "preco_venda": {
+        if (!value.trim()) return "O preço é obrigatório.";
+        const preco = Number(value);
+        if (isNaN(preco) || preco <= 0) {
+          return "O preço deve ser um número positivo.";
+        }
+        break;
+      }
+      case "estoque_atual": {
+        if (!product?.produto_id) {
+          // Validation only for new products
+          if (!value.trim()) return "O estoque inicial é obrigatório.";
+          const estoque = Number(value);
+          if (isNaN(estoque) || estoque < 0 || !Number.isInteger(estoque)) {
+            return "O estoque deve ser um número inteiro não-negativo.";
+          }
+        }
+        break;
+      }
+      default:
+        break;
+    }
+    return "";
+  };
+
+  const validateForm = (): boolean => {
+    const fieldsToValidate = {
+      nome: formData.nome,
+      tipo: formData.tipo,
+      unidade_medida: formData.unidade_medida,
+      preco_venda: formData.preco_venda,
+      // Only include estoque_atual for validation if it's a new product
+      ...(!product?.produto_id && { estoque_atual: formData.estoque_atual }),
+    };
+
+    const newErrors: { [key: string]: string } = {};
+    let isValid = true;
+    for (const [key, value] of Object.entries(fieldsToValidate)) {
+      const error = validateField(key, value);
+      if (error) {
+        newErrors[key] = error;
+        isValid = false;
+      }
+    }
+    setErrors(newErrors);
+    return isValid;
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "number" ? parseFloat(value) : value,
-    }));
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    // Clear the error for the field being edited for better user experience
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    const error = validateField(name, value);
+    setErrors((prev) => ({ ...prev, [name]: error }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(formData);
+    if (validateForm()) {
+      const commonData = {
+        nome: formData.nome.trim(),
+        tipo: formData.tipo.trim(),
+        unidade_medida: formData.unidade_medida.trim(),
+        preco_venda: parseFloat(formData.preco_venda),
+      };
+      if (product?.produto_id) {
+        onSave(commonData);
+      } else {
+        const createData: ProdutoCreateData = {
+          ...commonData,
+          estoque_atual: parseInt(formData.estoque_atual, 10),
+        };
+        onSave(createData);
+      }
+    }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4" noValidate>
       <Input
         label="Nome do Produto"
         name="nome"
         value={formData.nome}
         onChange={handleChange}
-        required
+        onBlur={handleBlur}
+        error={errors.nome}
+        maxLength={100}
       />
       <Input
         label="Tipo"
         name="tipo"
         value={formData.tipo}
         onChange={handleChange}
-        required
+        onBlur={handleBlur}
+        error={errors.tipo}
+        maxLength={50}
       />
       <Input
         label="Unidade de Medida"
         name="unidade_medida"
         value={formData.unidade_medida}
         onChange={handleChange}
-        required
+        onBlur={handleBlur}
+        error={errors.unidade_medida}
+        maxLength={20}
       />
       <Input
         label="Preço de Venda"
@@ -67,7 +162,8 @@ const ProductForm: React.FC<{
         step="0.01"
         value={formData.preco_venda}
         onChange={handleChange}
-        required
+        onBlur={handleBlur}
+        error={errors.preco_venda}
       />
       {!product?.produto_id && (
         <Input
@@ -76,7 +172,8 @@ const ProductForm: React.FC<{
           type="number"
           value={formData.estoque_atual}
           onChange={handleChange}
-          required
+          onBlur={handleBlur}
+          error={errors.estoque_atual}
         />
       )}
       <div className="flex justify-end gap-4 pt-4">
